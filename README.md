@@ -23,7 +23,7 @@ A Flask-based API that answers student questions using TDS course content and Di
 ## Project Structure
 
 - `app.py` — Main Flask API
-- `discourse_scraper.py` — Discourse scraper
+- `discourse_scraper_playwright.py` — Discourse scraper
 - `requirements.txt` — Dependencies
 - `Procfile` — Deployment config
 - `LICENSE` — MIT License
