@@ -37,6 +37,8 @@ def answer_question():
     try:
         data = request.get_json(force=True)
         question = data.get('question', '').strip().lower()
+        image = data.get('image', None)  # Optional base64-encoded image
+
         if not question:
             return jsonify({"answer": "No question provided.", "links": []}), 400
 
@@ -45,8 +47,8 @@ def answer_question():
         for post in forum_posts:
             if not isinstance(post, dict):
                 continue
-            # Search both 'content' and 'topic_title' fields
-            content = post.get('content', '').lower()
+            # Search both 'content' and 'topic_title' fields (adjust for your JSON structure)
+            content = post.get('content', '').lower() or post.get('raw', '').lower()
             topic_title = post.get('topic_title', '').lower()
             if question in content or question in topic_title:
                 topic_id = post.get('topic_id', '')
@@ -63,8 +65,13 @@ def answer_question():
         # Combine results
         all_results = discourse_results + course_results
 
+        # If image is provided but not processed, mention it in the answer
+        image_mention = " (Image upload is not supported at this time.)" if image else ""
+        answer = f"Found {len(all_results)} relevant resources." if all_results else "No results found."
+        answer += image_mention
+
         return jsonify({
-            "answer": f"Found {len(all_results)} relevant resources." if all_results else "No results found.",
+            "answer": answer,
             "links": all_results
         })
 
@@ -73,5 +80,5 @@ def answer_question():
 
 if __name__ == '__main__':
     app.run(debug=True)
-# To run the Flask app, use the command:
-# python app.py
+# Run the Flask app
+# Use `flask run` or `python app.py` to start the server
