@@ -61,4 +61,3 @@ def answer_question():
 if __name__ == '__main__':
     app.run(debug=True)
 # To run the Flask app, use the command: python app.py
-# Ensure you have Flask installed: pip install Flask
