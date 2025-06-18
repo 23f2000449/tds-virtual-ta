@@ -19,30 +19,43 @@ COURSE_CONTENT_PATH = "data/course_content/tools-in-data-science-public"
 def search_course_content(question):
     results = []
     for md_file in glob.glob(f"{COURSE_CONTENT_PATH}/**/*.md", recursive=True):
-        with open(md_file, 'r', encoding='utf-8') as f:
-            content = f.read().lower()
-            if question.lower() in content:
-                relative_path = os.path.relpath(md_file, COURSE_CONTENT_PATH)
-                results.append({
-                    "url": f"https://github.com/sanand0/tools-in-data-science-public/blob/main/{relative_path}",
-                    "text": os.path.basename(md_file)
-                })
+        try:
+            with open(md_file, 'r', encoding='utf-8') as f:
+                content = f.read().lower()
+                if question.lower() in content:
+                    relative_path = os.path.relpath(md_file, COURSE_CONTENT_PATH)
+                    results.append({
+                        "url": f"https://github.com/sanand0/tools-in-data-science-public/blob/main/{relative_path}",
+                        "text": os.path.basename(md_file)
+                    })
+        except Exception as e:
+            print(f"Error reading {md_file}: {e}")
     return results
 
 @app.route('/api/', methods=['POST'])
 def answer_question():
     try:
         data = request.get_json(force=True)
-        question = data.get('question', '').strip()
+        question = data.get('question', '').strip().lower()
         if not question:
             return jsonify({"answer": "No question provided.", "links": []}), 400
 
         # Search Discourse posts
         discourse_results = []
         for post in forum_posts:
-            if question.lower() in post.get('raw', '').lower() or question.lower() in post.get('topic_title', '').lower():
-                link = f"https://discourse.onlinedegree.iitm.ac.in/t/{post['topic_id']}/{post['post_number']}"
-                discourse_results.append({"url": link, "text": post.get('topic_title', '')[:100]})
+            if not isinstance(post, dict):
+                continue
+            # Search both 'content' and 'topic_title' fields
+            content = post.get('content', '').lower()
+            topic_title = post.get('topic_title', '').lower()
+            if question in content or question in topic_title:
+                topic_id = post.get('topic_id', '')
+                post_number = post.get('post_number', '')
+                link = f"https://discourse.onlinedegree.iitm.ac.in/t/{topic_id}/{post_number}"
+                discourse_results.append({
+                    "url": link,
+                    "text": topic_title[:100]
+                })
 
         # Search course content
         course_results = search_course_content(question)
@@ -60,4 +73,5 @@ def answer_question():
 
 if __name__ == '__main__':
     app.run(debug=True)
-# To run the Flask app, use the command: python app.py
+# To run the Flask app, use the command:
+# python app.py
